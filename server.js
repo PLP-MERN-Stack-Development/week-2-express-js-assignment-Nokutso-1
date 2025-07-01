@@ -52,6 +52,55 @@ app.get('/', (req, res) => {
 // PUT /api/products/:id - Update a product
 // DELETE /api/products/:id - Delete a product
 
+// ✅ GET /api/products/:id - Get a specific product
+app.get('/api/products/:id', (req, res) => {
+  const product = products.find(p => p.id === req.params.id);
+  if (!product) {
+    return res.status(404).json({ error: 'Product not found' });
+  }
+  res.json(product);
+});
+
+// ✅ POST /api/products - Create a new product
+app.post('/api/products', (req, res) => {
+  const { name, description, price, category, inStock } = req.body;
+  if (!name || !description || price == null || !category || inStock == null) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+  const newProduct = {
+    id: uuidv4(),
+    name,
+    description,
+    price,
+    category,
+    inStock
+  };
+  products.push(newProduct);
+  res.status(201).json(newProduct);
+});
+
+// ✅ PUT /api/products/:id - Update a product
+app.put('/api/products/:id', (req, res) => {
+  const index = products.findIndex(p => p.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Product not found' });
+  }
+  products[index] = { ...products[index], ...req.body };  //updates an existing product, keeping old data but replacing with new data if given
+  res.json(products[index]);
+});
+
+// ✅ DELETE /api/products/:id - Delete a product
+app.delete('/api/products/:id', (req, res) => {
+  const initialLength = products.length;
+  products = products.filter(p => p.id !== req.params.id);
+  if (products.length === initialLength) {
+    return res.status(404).json({ error: 'Product not found' });
+  }
+  res.status(204).send(); // 204 = No Content
+});
+
+
+
 // Example route implementation for GET /api/products
 app.get('/api/products', (req, res) => {
   res.json(products);
@@ -61,6 +110,10 @@ app.get('/api/products', (req, res) => {
 // - Request logging
 // - Authentication
 // - Error handling
+app.use((err, req, res, next) => {
+  console.error('💥 Error:', err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
 
 // Start the server
 app.listen(PORT, () => {
